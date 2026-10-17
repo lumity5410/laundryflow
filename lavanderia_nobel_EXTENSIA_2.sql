@@ -1,38 +1,27 @@
 create database lavanderia_nobel;
 use lavanderia_nobel;
+
 create table usuario(
 id_usuario tinyint unsigned auto_increment primary key,
+tipo_de_usuario enum ("administrador", "encargado de recepcion", "encargado de ciclo de lavado y secado") not null,
 tipo_de_documento enum ("CC", "PPT", "PEP", "CE", "OTRO") not null,
+contrasena varchar (255) not null,
 num_documento int unsigned not null unique,
 nombre varchar (255) not null,
 apellido varchar (255) not null,
 fecha_de_nacimiento date not null,
-nivel_educativo varchar (255) not null,
 genero enum ("femenino", "masculino", "otros") not null,
 estado_civil enum ("soltero", "casado", "divorciado", "viudo") not null, 
-correo_electronico_1 varchar (255) not null,
-correo_electronico_2 varchar (255) null,
 tipo_usuario enum ("administrador", "encargado de recepcion", "encargado de ciclo de lavado y secado") not null,
 direccion varchar (255) not null,
-referencia_personal varchar (255) not null,
-telefono_referencia_personal int unsigned not null,
-nombre_referencia_personal varchar (255) not null,
-parentesco_referencia_personal varchar (255) not null,
-referencia_laboral varchar (255) not null,
-telefono_refencia_laboral int unsigned not null,
-nombre_refencia_laboral varchar (255) not null,
-cargo_desempeñado varchar (255) not null,
-periodo_de_trabajo date not null,
-motivo_de_salida varchar (255) not null,
 estado char (1) default "A" not null
 );
 
 create table cliente(
 telefono int unsigned primary key,
 nombre varchar (255) not null,
-CC int unsigned unique,
-correo_electronico_1 varchar (255)not null,
-correo_electronico_2 varchar (255) null,
+tipo_de_documento enum ("CC", "TI", "CE", "NIT", "PPT", "otro"),
+numero_tipo_de_documento int unsigned unique,
 estado char (1) default "A" not null
 );
 
@@ -46,9 +35,38 @@ precio_del_servicio decimal not null,
 estado char (1) default "A" not null
 );
 
+create table refencia_personal(
+id_usuario  tinyint unsigned  not null,
+foreign key (id_usuario) references usuario (id_usuario),
+referencia varchar (255) not null,
+nombre_referencia_personal varchar (255) not null,
+parentesco_referencia_personal varchar (255) not null
+);
+create table referencia_laboral(
+id_usuario  tinyint unsigned  not null,
+foreign key (id_usuario) references usuario (id_usuario),
+referencia varchar (255) not null,
+nombre_refencia_laboral varchar (255) not null,
+cargo_desempeñado varchar (255) not null,
+periodo_de_trabajo date not null,
+motivo_de_salida varchar (255) not null
+);
+create table educacion(
+id_usuario  tinyint unsigned not null,
+foreign key (id_usuario) references usuario (id_usuario),
+nivel_educativo varchar (255) not null
+);
+create table correo(
+id_usuario  tinyint unsigned not null,
+foreign key (id_usuario) references usuario (id_usuario),
+id_cliente int unsigned not null,
+foreign key (id_cliente) references cliente (telefono),
+correo_electronico varchar (255) not null
+);
 create table telefono(
 id_usuario tinyint unsigned not null,
 foreign key (id_usuario) references usuario (id_usuario),
+tipo_de_telefono enum ("Referencia personal", "Referencia laboral", "Otros") not null,
 telefono int unsigned not null 
 );
 
@@ -84,7 +102,7 @@ foreign key (codigo_orden) references orden (codigo)
 );
 
 create table prenda(
-codigo_orden_prenda smallint unsigned auto_increment primary key,
+codigo_orden_prenda varchar (255) primary key,
 tipo enum ("chaqueta", "jeans", "camisas", "manteles", "sabanas", "edredones") not null,
 color varchar (255) not null,
 material enum ("algodon", "lino", "lana", "seda", "poliester", "licra") not null,
@@ -95,7 +113,7 @@ foreign key (codigo_orden) references orden (codigo)
 );
 
 create table aplica(
-codigo_orden_prenda smallint unsigned not null,
+codigo_orden_prenda varchar (255) not null,
 foreign key (codigo_orden_prenda) references prenda (codigo_orden_prenda),
 id_servicio tinyint unsigned not null,
 foreign key (id_servicio) references servicio (id_servicio)
@@ -155,28 +173,27 @@ insert into usuario (tipo_de_documento, num_documento, nombre, apellido, fecha_d
 ('CC', 100000020, 'Juliana', 'Vega', '1998-04-02', 'Universitario', 'femenino', 'casado', 'juliana.vega@example.com', NULL, 'encargado de ciclo de lavado y secado', 'Carrera 40 # 12-33', 'Hermano', 300000020, 'Andres Vega', 'Hermano', 'Lavanderia Premium', 601000020, 'Cecilia Fuentes', 'Supervisora de lavado', '2023-01-15', 'Mejor oferta laboral', 'A');
 select * from usuario;
 
-insert into cliente (  telefono, nombre, CC, correo_electronico_1, correo_electronico_2, estado) values 
-(3100000001, 'Andres Rodriguez', 100100001, 'andres.rod@example.com', NULL, 'A'),
-(3100000002, 'Laura Martinez', 100100002, 'laura.mar@example.com', NULL, 'A'),
-(3100000003, 'Daniel Gomez', 100100003, 'daniel.gom@example.com', 'daniel.alt@example.com', 'A'),
-(3100000004, 'Camila Hernandez', 100100004, 'camila.her@example.com', NULL, 'A'),
-(3100000005, 'Sebastian Lopez', 100100005, 'sebas.lopez@example.com', NULL, 'A'),
-(3100000006, 'Valentina Perez', 100100006, 'valen.perez@example.com', NULL, 'A'),
-(3100000007, 'Juan Sanchez', 100100007, 'juan.san@example.com', NULL, 'A'),
-(3100000008, 'Mariana Torres', 100100008, 'mariana.tor@example.com', NULL, 'A'),
-(3100000009, 'Nicolas Ramirez', 100100009, 'nicolas.ram@example.com', NULL, 'A'),
-(3100000010, 'Isabella Castro', 100100010, 'isa.castro@example.com', NULL, 'A'),
-(3100000011, 'Miguel Diaz', 100100011, 'miguel.diaz@example.com', NULL, 'A'),
-(3100000012, 'Gabriela Moreno', 100100012, 'gabi.mor@example.com', NULL, 'A'),
-(3100000013, 'Samuel Vargas', 100100013, 'samuel.var@example.com', NULL, 'A'),
-(3100000014, 'Daniela Rojas', 100100014, 'daniela.roj@example.com', NULL, 'A'),
-(3100000015, 'David Silva', 100100015, 'david.sil@example.com', NULL, 'A'),
-(3100000016, 'Sara Ortega', 100100016, 'sara.ort@example.com', NULL, 'A'),
-(3100000017, 'Alejandro Mendoza', 100100017, 'alejo.men@example.com', NULL, 'A'),
-(3100000018, 'Natalia Cruz', 100100018, 'natalia.cruz@example.com', NULL, 'A'),
-(3100000019, 'Mateo Reyes', 100100019, 'mateo.rey@example.com', NULL, 'A'),
-(3100000020, 'Juliana Vega', 100100020, 'juliana.vega@example.com', NULL, 'A');
-select * from cliente;
+INSERT INTO cliente (telefono,nombre,tipo_de_documento,numero_tipo_de_documento,correo_electronico_1,correo_electronico_2,estado)
+VALUES(3001234501, 'Juan Perez', 'CC', 1001234501, 'juan.perez@example.com', 'jperez@example.com', 'A'),
+(3001234502, 'Maria Rodriguez', 'CC', 1001234502, 'maria.rodriguez@example.com', NULL, 'A'),
+(3001234503, 'Carlos Gomez', 'TI', 1001234503, 'carlos.gomez@example.com', NULL, 'A'),
+(3001234504, 'Ana Martinez', 'CE', 1001234504, 'ana.martinez@example.com', 'ana.m@example.com', 'I'),
+(3001234505, 'Pedro Sanchez', 'CC', 1001234505, 'pedro.sanchez@example.com', NULL, 'A'),
+(3001234506, 'Laura Torres', 'PPT', 1001234506, 'laura.torres@example.com', NULL, 'A'),
+(3001234507, 'Andres Ramirez', 'NIT', 1001234507, 'andres.ramirez@example.com', 'aramirez@example.com', 'A'),
+(3001234508, 'Sofia Castro', 'CC', 1001234508, 'sofia.castro@example.com', NULL, 'I'),
+(3001234509, 'Diego Herrera', 'otro', 1001234509, 'diego.herrera@example.com', NULL, 'A'),
+(3001234510, 'Camila Diaz', 'TI', 1001234510, 'camila.diaz@example.com', 'camila.d@example.com', 'A'),
+(3001234511, 'Jorge Moreno', 'CC', 1001234511, 'jorge.moreno@example.com', NULL, 'A'),
+(3001234512, 'Valentina Rojas', 'CE', 1001234512, 'valentina.rojas@example.com', NULL, 'A'),
+(3001234513, 'Sebastian Vargas', 'CC', 1001234513, 'sebastian.vargas@example.com', 'svargas@example.com', 'I'),
+(3001234514, 'Isabella Ortiz', 'TI', 1001234514, 'isabella.ortiz@example.com', NULL, 'A'),
+(3001234515, 'Daniel Jimenez', 'PPT', 1001234515, 'daniel.jimenez@example.com', NULL, 'A'),
+(3001234516, 'Gabriela Silva', 'CC', 1001234516, 'gabriela.silva@example.com', 'gaby.s@example.com', 'A'),
+(3001234517, 'Mateo Castillo', 'NIT', 1001234517, 'mateo.castillo@example.com', NULL, 'I'),
+(3001234518, 'Lucia Fernandez', 'CE', 1001234518, 'lucia.fernandez@example.com', NULL, 'A'),
+(3001234519, 'Nicolas Medina', 'CC', 1001234519, 'nicolas.medina@example.com', 'nmedina@example.com', 'A'),
+(3001234520, 'Paula Guerrero', 'otro', 1001234520, 'paula.guerrero@example.com', NULL, 'A');
 
 insert into servicio (tipo_de_servicio, descripcion_del_servicio, requiere_tratamiento_de_manchas, tiempo_estimado, precio_del_servicio, estado) 
 values
@@ -247,48 +264,48 @@ VALUES ('2026-10-01 08:30:00', 5, 'Ropa de uso diario', '2026-10-02 16:00:00', 2
 ('2026-10-03 09:30:00', 2, 'Camisas para evento', '2026-10-04 16:00:00', 18000, 'listo para entregar', 2, 3100000020);
 
 INSERT INTO pago (metodo_de_pago, fecha_de_pago, tipo_de_pago, estado_de_pago, total, saldo_pendiente, comprobante, observaciones_de_pago, descuento, comsion, impuesto, codigo_orden) VALUES
-('nequi', '2026-10-01 08:35:00', 'pago completo', 'pago completo', 25000, 0, 'si', 'Pago realizado por Nequi', 0, 0, 0, 21),
-('efectivo', '2026-10-01 09:05:00', 'abono', 'saldo pendiente', 10000, 8000, 'no', 'Abono inicial en efectivo', 0, 0, 0, 22),
-('daviplata', '2026-10-01 09:35:00', 'pago completo', 'pago completo', 35000, 0, 'si', 'Pago completo por Daviplata', 0, 0, 0, 23),
-('efectivo', '2026-10-01 10:05:00', 'abono', 'saldo pendiente', 12000, 10000, 'no', 'Abono para prendas delicadas', 0, 0, 0, 24),
-('nequi', '2026-10-01 10:35:00', 'pago completo', 'pago completo', 30000, 0, 'si', 'Pago completo por Nequi', 0, 0, 0, 25),
-('otro', '2026-10-01 11:05:00', 'abono', 'saldo pendiente', 20000, 20000, 'si', 'Abono parcial para trajes', 0, 0, 0, 26),
-('efectivo', '2026-10-01 11:35:00', 'pago completo', 'pago completo', 45000, 0, 'no', 'Pago en efectivo', 0, 0, 0, 27),
-('daviplata', '2026-10-01 12:05:00', 'pago completo', 'pago completo', 20000, 0, 'si', 'Pago completo por Daviplata', 0, 0, 0, 28),
-('nequi', '2026-10-02 08:05:00', 'abono', 'saldo pendiente', 15000, 13000, 'si', 'Abono para uniformes escolares', 0, 0, 0, 29),
-('efectivo', '2026-10-02 08:35:00', 'pago completo', 'pago completo', 32000, 0, 'no', 'Pago completo en efectivo', 0, 0, 0, 30),
-('daviplata', '2026-10-02 09:05:00', 'abono', 'saldo pendiente', 18000, 20000, 'si', 'Abono por tratamiento de manchas', 0, 0, 0, 31),
-('nequi', '2026-10-02 09:35:00', 'pago completo', 'pago completo', 26000, 0, 'si', 'Pago completo por Nequi', 0, 0, 0, 32),
-('efectivo', '2026-10-02 10:05:00', 'abono', 'saldo pendiente', 20000, 22000, 'no', 'Abono parcial de ropa familiar', 0, 0, 0, 33),
-('otro', '2026-10-02 10:35:00', 'pago completo', 'pago completo', 24000, 0, 'si', 'Pago mediante otro método', 0, 0, 0, 34),
-('daviplata', '2026-10-02 11:05:00', 'abono', 'saldo pendiente', 15000, 20000, 'si', 'Abono para sábanas y fundas', 0, 0, 0, 35),
-('efectivo', '2026-10-02 11:35:00', 'pago completo', 'pago completo', 22000, 0, 'no', 'Pago completo en efectivo', 0, 0, 0, 36),
-('nequi', '2026-10-03 08:05:00', 'abono', 'saldo pendiente', 25000, 25000, 'si', 'Abono para chaquetas y abrigos', 0, 0, 0, 37),
-('daviplata', '2026-10-03 08:35:00', 'abono', 'saldo pendiente', 10000, 20000, 'si', 'Abono para prendas con manchas de tinta', 0, 0, 0, 38),
-('efectivo', '2026-10-03 09:05:00', 'pago completo', 'pago completo', 40000, 0, 'no', 'Pago completo en efectivo', 0, 0, 0, 39),
-('nequi', '2026-10-03 09:35:00', 'pago completo', 'pago completo', 18000, 0, 'si', 'Pago completo por Nequi', 0, 0, 0, 40);
+('nequi', '2026-10-01 08:35:00', 'pago completo', 'pago completo', 25000, 0, 'si', 'Pago realizado por Nequi', 0, 0, 0, 1),
+('efectivo', '2026-10-01 09:05:00', 'abono', 'saldo pendiente', 10000, 8000, 'no', 'Abono inicial en efectivo', 0, 0, 0, 2),
+('daviplata', '2026-10-01 09:35:00', 'pago completo', 'pago completo', 35000, 0, 'si', 'Pago completo por Daviplata', 0, 0, 0, 3),
+('efectivo', '2026-10-01 10:05:00', 'abono', 'saldo pendiente', 12000, 10000, 'no', 'Abono para prendas delicadas', 0, 0, 0, 4),
+('nequi', '2026-10-01 10:35:00', 'pago completo', 'pago completo', 30000, 0, 'si', 'Pago completo por Nequi', 0, 0, 0, 5),
+('otro', '2026-10-01 11:05:00', 'abono', 'saldo pendiente', 20000, 20000, 'si', 'Abono parcial para trajes', 0, 0, 0, 6),
+('efectivo', '2026-10-01 11:35:00', 'pago completo', 'pago completo', 45000, 0, 'no', 'Pago en efectivo', 0, 0, 0, 7),
+('daviplata', '2026-10-01 12:05:00', 'pago completo', 'pago completo', 20000, 0, 'si', 'Pago completo por Daviplata', 0, 0, 0, 8),
+('nequi', '2026-10-02 08:05:00', 'abono', 'saldo pendiente', 15000, 13000, 'si', 'Abono para uniformes escolares', 0, 0, 0, 9),
+('efectivo', '2026-10-02 08:35:00', 'pago completo', 'pago completo', 32000, 0, 'no', 'Pago completo en efectivo', 0, 0, 0, 10),
+('daviplata', '2026-10-02 09:05:00', 'abono', 'saldo pendiente', 18000, 20000, 'si', 'Abono por tratamiento de manchas', 0, 0, 0, 11),
+('nequi', '2026-10-02 09:35:00', 'pago completo', 'pago completo', 26000, 0, 'si', 'Pago completo por Nequi', 0, 0, 0, 12),
+('efectivo', '2026-10-02 10:05:00', 'abono', 'saldo pendiente', 20000, 22000, 'no', 'Abono parcial de ropa familiar', 0, 0, 0, 13),
+('otro', '2026-10-02 10:35:00', 'pago completo', 'pago completo', 24000, 0, 'si', 'Pago mediante otro método', 0, 0, 0, 14),
+('daviplata', '2026-10-02 11:05:00', 'abono', 'saldo pendiente', 15000, 20000, 'si', 'Abono para sábanas y fundas', 0, 0, 0, 15),
+('efectivo', '2026-10-02 11:35:00', 'pago completo', 'pago completo', 22000, 0, 'no', 'Pago completo en efectivo', 0, 0, 0, 16),
+('nequi', '2026-10-03 08:05:00', 'abono', 'saldo pendiente', 25000, 25000, 'si', 'Abono para chaquetas y abrigos', 0, 0, 0, 17),
+('daviplata', '2026-10-03 08:35:00', 'abono', 'saldo pendiente', 10000, 20000, 'si', 'Abono para prendas con manchas de tinta', 0, 0, 0, 18),
+('efectivo', '2026-10-03 09:05:00', 'pago completo', 'pago completo', 40000, 0, 'no', 'Pago completo en efectivo', 0, 0, 0, 19),
+('nequi', '2026-10-03 09:35:00', 'pago completo', 'pago completo', 18000, 0, 'si', 'Pago completo por Nequi', 0, 0, 0, 20);
 
-INSERT INTO prenda (tipo,color,material,descripcion,manchas,codigo_orden) VALUES
-('chaqueta', 'Negro', 'poliester', 'Chaqueta de uso diario', 'no', 21),
-('jeans', 'Azul', 'algodon', 'Jeans con desgaste leve', 'si', 22),
-('camisas', 'Blanco', 'algodon', 'Camisa formal de manga larga', 'no', 23),
-('manteles', 'Beige', 'lino', 'Mantel para comedor', 'si', 24),
-('sabanas', 'Blanco', 'algodon', 'Juego de sábanas sencillo', 'no', 25),
-('edredones', 'Gris', 'poliester', 'Edredón para cama doble', 'si', 26),
-('chaqueta', 'Azul oscuro', 'lana', 'Chaqueta para clima frío', 'no', 27),
-('jeans', 'Negro', 'algodon', 'Pantalón de mezclilla negro', 'no', 28),
-('camisas', 'Azul claro', 'poliester', 'Camisa para oficina', 'si', 29),
-('manteles', 'Blanco', 'algodon', 'Mantel para eventos', 'no', 30),
-('sabanas', 'Rosado', 'algodon', 'Sábanas para cama sencilla', 'si', 31),
-('edredones', 'Azul', 'poliester', 'Edredón acolchado', 'no', 32),
-('chaqueta', 'Café', 'cuero', 'Chaqueta de color café', 'si', 33),
-('jeans', 'Gris', 'algodon', 'Jeans de corte clásico', 'no', 34),
-('camisas', 'Negro', 'seda', 'Camisa delicada', 'no', 35),
-('manteles', 'Verde', 'lino', 'Mantel decorativo', 'si', 36),
-('sabanas', 'Amarillo', 'algodon', 'Sábanas para habitación', 'no', 37),
-('edredones', 'Blanco', 'lana', 'Edredón grueso', 'si', 38),
-('chaqueta', 'Rojo', 'poliester', 'Chaqueta deportiva', 'no', 39),
-('camisas', 'Verde', 'licra', 'Camisa elástica', 'si', 40);
+INSERT INTO prenda (codigo_orden_prenda,tipo,color,material,descripcion,manchas,codigo_orden) VALUES
+(1, 'chaqueta', 'Negro', 'poliester', 'Chaqueta de uso diario', 'no', 1),
+(2, 'jeans', 'Azul', 'algodon', 'Jeans con desgaste leve', 'si', 2),
+(3, 'camisas', 'Blanco', 'algodon', 'Camisa formal de manga larga', 'no', 3),
+(4, 'manteles', 'Beige', 'lino', 'Mantel para comedor', 'si', 4),
+(5, 'sabanas', 'Blanco', 'algodon', 'Juego de sábanas sencillo', 'no', 5),
+(6, 'edredones', 'Gris', 'poliester', 'Edredón para cama doble', 'si', 6),
+(7, 'chaqueta', 'Azul oscuro', 'lana', 'Chaqueta para clima frío', 'no', 7),
+(8, 'jeans', 'Negro', 'algodon', 'Pantalón de mezclilla negro', 'no', 8),
+(9,'camisas', 'Azul claro', 'poliester', 'Camisa para oficina', 'si', 9),
+(10, 'manteles', 'Blanco', 'algodon', 'Mantel para eventos', 'no', 10),
+(11,'sabanas', 'Rosado', 'algodon', 'Sábanas para cama sencilla', 'si', 11),
+(12,'edredones', 'Azul', 'poliester', 'Edredón acolchado', 'no', 12),
+(13,'chaqueta', 'Café', 'cuero', 'Chaqueta de color café', 'si', 13),
+(14,'jeans', 'Gris', 'algodon', 'Jeans de corte clásico', 'no', 14),
+(15,'camisas', 'Negro', 'seda', 'Camisa delicada', 'no', 15),
+(16,'manteles', 'Verde', 'lino', 'Mantel decorativo', 'si', 16),
+(17,'sabanas', 'Amarillo', 'algodon', 'Sábanas para habitación', 'no', 17),
+(18,'edredones', 'Blanco', 'lana', 'Edredón grueso', 'si', 18),
+(19,'chaqueta', 'Rojo', 'poliester', 'Chaqueta deportiva', 'no', 19),
+(20, 'camisas', 'Verde', 'licra', 'Camisa elástica', 'si', 20);
 
 INSERT INTO aplica (codigo_orden_prenda, id_servicio) VALUES
 (1, 1),
